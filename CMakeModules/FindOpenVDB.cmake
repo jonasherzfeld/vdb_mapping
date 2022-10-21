@@ -45,53 +45,33 @@
 
 FIND_PACKAGE( PackageHandleStandardArgs )
 
-FIND_PATH( OPENVDB_LOCATION include/openvdb/version.h 
-  "ENV{OPENVDB_ROOT}"
-  NO_SYSTEM_ENVIRONMENT_PATH
-  )
+SET(OpenVDB_FOUND TRUE)
+SET( OpenVDB_INCLUDE_DIR ${OPENVDB_ROOT}/include)
+SET( OpenVDB_LIBRARY_DIR ${OPENVDB_ROOT}/lib)
+SET( OpenVDB_OPENVDB_LIBRARY ${OpenVDB_LIBRARY_DIR}/libopenvdb.so)
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( OpenVDB
-  REQUIRED_VARS OPENVDB_LOCATION 
-  )
+SET( OpenVDB_LIBRARIES "")
+LIST( APPEND OpenVDB_LIBRARIES ${OpenVDB_OPENVDB_LIBRARY} )
 
-IF( OpenVDB_FOUND )
-  SET( OpenVDB_INCLUDE_DIR ${OPENVDB_LOCATION}/include
-    CACHE PATH "OpenVDB include directory")
+SET( OPENVDB_VERSION_FILE ${OpenVDB_INCLUDE_DIR}/openvdb/version.h )
 
-  SET( OpenVDB_LIBRARY_DIR ${OPENVDB_LOCATION}/lib
-    CACHE PATH "OpenVDB library directory" )
-  
-  FIND_LIBRARY( OpenVDB_OPENVDB_LIBRARY openvdb
-    PATHS ${OpenVDB_LIBRARY_DIR}
-    #NO_DEFAULT_PATH
-    NO_SYSTEM_ENVIRONMENT_PATH
-    )
-  
-  SET( OpenVDB_LIBRARIES "")
-  LIST( APPEND OpenVDB_LIBRARIES ${OpenVDB_OPENVDB_LIBRARY} )
-  
-  SET( OPENVDB_VERSION_FILE ${OpenVDB_INCLUDE_DIR}/openvdb/version.h )
+FILE( STRINGS "${OPENVDB_VERSION_FILE}" openvdb_major_version_str
+  REGEX "^#define[\t ]+OPENVDB_LIBRARY_MAJOR_VERSION_NUMBER[\t ]+.*")
+FILE( STRINGS "${OPENVDB_VERSION_FILE}" openvdb_minor_version_str
+  REGEX "^#define[\t ]+OPENVDB_LIBRARY_MINOR_VERSION_NUMBER[\t ]+.*")
+FILE( STRINGS "${OPENVDB_VERSION_FILE}" openvdb_patch_version_str
+  REGEX "^#define[\t ]+OPENVDB_LIBRARY_PATCH_VERSION_NUMBER[\t ]+.*")
 
-  FILE( STRINGS "${OPENVDB_VERSION_FILE}" openvdb_major_version_str
-    REGEX "^#define[\t ]+OPENVDB_LIBRARY_MAJOR_VERSION_NUMBER[\t ]+.*")
-  FILE( STRINGS "${OPENVDB_VERSION_FILE}" openvdb_minor_version_str
-    REGEX "^#define[\t ]+OPENVDB_LIBRARY_MINOR_VERSION_NUMBER[\t ]+.*")
-  FILE( STRINGS "${OPENVDB_VERSION_FILE}" openvdb_patch_version_str
-    REGEX "^#define[\t ]+OPENVDB_LIBRARY_PATCH_VERSION_NUMBER[\t ]+.*")
+STRING( REGEX REPLACE "^.*OPENVDB_LIBRARY_MAJOR_VERSION_NUMBER[\t ]+([0-9]*).*$" "\\1"
+  _openvdb_major_version_number "${openvdb_major_version_str}")
+STRING( REGEX REPLACE "^.*OPENVDB_LIBRARY_MINOR_VERSION_NUMBER[\t ]+([0-9]*).*$" "\\1"
+  _openvdb_minor_version_number "${openvdb_minor_version_str}")
+STRING( REGEX REPLACE "^.*OPENVDB_LIBRARY_PATCH_VERSION_NUMBER[\t ]+([0-9]*).*$" "\\1"
+  _openvdb_patch_version_number "${openvdb_patch_version_str}")
 
-  STRING( REGEX REPLACE "^.*OPENVDB_LIBRARY_MAJOR_VERSION_NUMBER[\t ]+([0-9]*).*$" "\\1"
-    _openvdb_major_version_number "${openvdb_major_version_str}")
-  STRING( REGEX REPLACE "^.*OPENVDB_LIBRARY_MINOR_VERSION_NUMBER[\t ]+([0-9]*).*$" "\\1"
-    _openvdb_minor_version_number "${openvdb_minor_version_str}")
-  STRING( REGEX REPLACE "^.*OPENVDB_LIBRARY_PATCH_VERSION_NUMBER[\t ]+([0-9]*).*$" "\\1"
-    _openvdb_patch_version_number "${openvdb_patch_version_str}")
-
-  SET( OpenVDB_MAJOR_VERSION ${_openvdb_major_version_number}
-    CACHE STRING "OpenVDB major version number" )
-  SET( OpenVDB_MINOR_VERSION ${_openvdb_minor_version_number}
-    CACHE STRING "OpenVDB minor version number" )
-  SET( OpenVDB_PATCH_VERSION ${_openvdb_patch_version_number}
-    CACHE STRING "OpenVDB patch version number" )
-
-ENDIF( OpenVDB_FOUND )
-
+SET( OpenVDB_MAJOR_VERSION ${_openvdb_major_version_number}
+  CACHE STRING "OpenVDB major version number" )
+SET( OpenVDB_MINOR_VERSION ${_openvdb_minor_version_number}
+  CACHE STRING "OpenVDB minor version number" )
+SET( OpenVDB_PATCH_VERSION ${_openvdb_patch_version_number}
+  CACHE STRING "OpenVDB patch version number" )

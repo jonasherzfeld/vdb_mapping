@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules" ${CMAKE_MODULE_PATH})
+cmake_policy(SET CMP0074 NEW)
 
 option(BUILDING_TESTS "Build unit tests." ON)
 
@@ -40,7 +41,7 @@ ADD_CLANGTIDY_TARGET(${PROJECT_NAME})
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME} SHARED
-  src/OccupancyVDBMapping.cpp 
+  src/OccupancyVDBMapping.cpp
   )
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${CXX14_FLAG})
@@ -49,21 +50,20 @@ target_include_directories(${PROJECT_NAME}
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
-target_include_directories(${PROJECT_NAME}
+    target_include_directories(${PROJECT_NAME}
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${EIGEN3_INCLUDE_DIR}
-    ${OpenVDB_INCLUDE_DIRS}
+    ${OpenVDB_INCLUDE_DIR}
     ${PCL_INCLUDE_DIRS}
     )
 
-target_link_libraries(${PROJECT_NAME}
+    target_link_libraries(${PROJECT_NAME}
   PUBLIC
     ${OpenVDB_LIBRARIES}
     ${PCL_LIBRARIES}
     ${TBB_LIBRARIES}
-    -lHalf
     )
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
