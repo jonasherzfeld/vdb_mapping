@@ -25,6 +25,16 @@
  *
  */
 //----------------------------------------------------------------------
+
+// -- LICENSE ON MODIFICATIONS -----------------------------------------
+// RACK KION - Robotics Application Construction Kit (KION internal)
+// Copyright (C) 2022 KION Group AG
+//
+// All rights reserved.
+//
+// Author
+//     Jonas Herzfeld <jonas.herzfeld@kiongroup.com>
+// ---------------------------------------------------------------------
 #ifndef VDB_MAPPING_VDB_MAPPING_H_INCLUDED
 #define VDB_MAPPING_VDB_MAPPING_H_INCLUDED
 
@@ -35,7 +45,7 @@
 #include <pcl/common/common.h>
 
 #include <chrono>
-#include <eigen3/Eigen/Geometry>
+#include <Eigen/Geometry>
 
 #include <openvdb/Types.h>
 #include <openvdb/io/Stream.h>
@@ -134,6 +144,7 @@ public:
   bool insertPointCloud(const PointCloudT::ConstPtr& cloud,
                         const Eigen::Matrix<double, 3, 1>& origin,
                         UpdateGridT::Ptr& update_grid,
+                        UpdateGridT::Ptr& raycast_update_grid,
                         UpdateGridT::Ptr& overwrite_grid,
                         const bool reduce_data);
 
@@ -158,8 +169,9 @@ public:
    *
    * \returns Raycasted update grid
    */
-  UpdateGridT::Ptr raycastPointCloud(const PointCloudT::ConstPtr& cloud,
-                                     const Eigen::Matrix<double, 3, 1>& origin) const;
+  void raycastPointCloud(const PointCloudT::ConstPtr& cloud,
+                                     const Eigen::Matrix<double, 3, 1>& origin,
+                                     UpdateGridT::Ptr& temp_grid) const;
 
   /*!
    * \brief Raycasts an reduced data update Grid into full update grid
@@ -168,7 +180,8 @@ public:
    *
    * \returns Full update Grid
    */
-  UpdateGridT::Ptr raycastUpdateGrid(const UpdateGridT::Ptr& grid) const;
+  void raycastUpdateGrid(const UpdateGridT::Ptr& grid,
+                         UpdateGridT::Ptr& temp_grid) const;
 
   /*!
    * \brief Creates a reduced data update grid from a pointcloud which only contains the
@@ -179,8 +192,9 @@ public:
    *
    * \returns Reduced update grid
    */
-  UpdateGridT::Ptr pointCloudToUpdateGrid(const PointCloudT::ConstPtr& cloud,
-                                          const Eigen::Matrix<double, 3, 1>& origin) const;
+  void pointCloudToUpdateGrid(const PointCloudT::ConstPtr& cloud,
+                              const Eigen::Matrix<double, 3, 1>& origin,
+                              UpdateGridT::Ptr& temp_grid) const;
 
   /*!
    * \brief Casts a single ray into an update grid structure
@@ -210,7 +224,9 @@ public:
    *
    * \returns Was the insertion of the pointcloud successuff
    */
-  UpdateGridT::Ptr updateMap(const UpdateGridT::Ptr& temp_grid);
+  void updateMap(const UpdateGridT::Ptr& temp_grid,
+                 UpdateGridT::Ptr& change);
+  void updateMap(const UpdateGridT::Ptr& temp_grid);
 
   /*!
    * \brief Returns a pointer to the VDB map structure

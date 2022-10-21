@@ -26,6 +26,15 @@
  */
 //----------------------------------------------------------------------
 
+// -- LICENSE ON MODIFICATIONS -----------------------------------------
+// RACK KION - Robotics Application Construction Kit (KION internal)
+// Copyright (C) 2022 KION Group AG
+//
+// All rights reserved.
+//
+// Author
+//     Jonas Herzfeld <jonas.herzfeld@kiongroup.com>
+// ---------------------------------------------------------------------
 
 #include <iostream>
 
@@ -169,21 +178,20 @@ template <typename DataT, typename ConfigT>
 bool VDBMapping<DataT, ConfigT>::insertPointCloud(const PointCloudT::ConstPtr& cloud,
                                                   const Eigen::Matrix<double, 3, 1>& origin,
                                                   UpdateGridT::Ptr& update_grid,
+                                                  UpdateGridT::Ptr& raycast_update_grid,
                                                   UpdateGridT::Ptr& overwrite_grid,
                                                   const bool reduce_data)
 {
-  UpdateGridT::Ptr raycast_update_grid;
-
   if (!reduce_data)
   {
-    update_grid    = raycastPointCloud(cloud, origin);
-    overwrite_grid = updateMap(update_grid);
+    raycastPointCloud(cloud, origin, update_grid);
+    updateMap(update_grid, overwrite_grid);
   }
   else
   {
-    update_grid         = pointCloudToUpdateGrid(cloud, origin);
-    raycast_update_grid = raycastUpdateGrid(update_grid);
-    overwrite_grid      = updateMap(raycast_update_grid);
+    pointCloudToUpdateGrid(cloud, origin, update_grid);
+    raycastUpdateGrid(update_grid, raycast_update_grid);
+    updateMap(raycast_update_grid, overwrite_grid);
   }
   return true;
 }
@@ -274,20 +282,19 @@ VDBMapping<DataT, ConfigT>::createUpdate(const PointCloudT::ConstPtr& cloud,
 
 
 template <typename DataT, typename ConfigT>
-VDBMapping<DataT, ConfigT>::UpdateGridT::Ptr
-VDBMapping<DataT, ConfigT>::raycastPointCloud(const PointCloudT::ConstPtr& cloud,
-                                              const Eigen::Matrix<double, 3, 1>& origin) const
+void VDBMapping<DataT, ConfigT>::raycastPointCloud(const PointCloudT::ConstPtr& cloud,
+                                              const Eigen::Matrix<double, 3, 1>& origin,
+                                              UpdateGridT::Ptr& temp_grid) const
 {
   // Creating a temporary grid in which the new data is casted. This way we prevent the computation
   // of redundant probability updates in the actual map
-  UpdateGridT::Ptr temp_grid     = UpdateGridT::create(false);
   UpdateGridT::Accessor temp_acc = temp_grid->getAccessor();
 
   // Check if a valid configuration was loaded
   if (!m_config_set)
   {
     std::cerr << "Map not properly configured. Did you call setConfig method?" << std::endl;
-    return temp_grid;
+    return;
   }
 
   RayT ray;
@@ -306,20 +313,19 @@ VDBMapping<DataT, ConfigT>::raycastPointCloud(const PointCloudT::ConstPtr& cloud
     ray_end_world = openvdb::Vec3d(pt.x, pt.y, pt.z);
     castRayIntoGrid(ray_origin_world, ray_origin_index, ray_end_world, temp_acc);
   }
-  return temp_grid;
+  return;
 }
 
 template <typename DataT, typename ConfigT>
-VDBMapping<DataT, ConfigT>::UpdateGridT::Ptr
-VDBMapping<DataT, ConfigT>::pointCloudToUpdateGrid(const PointCloudT::ConstPtr& cloud,
-                                                   const Eigen::Matrix<double, 3, 1>& origin) const
+void VDBMapping<DataT, ConfigT>::pointCloudToUpdateGrid(const PointCloudT::ConstPtr& cloud,
+                                                   const Eigen::Matrix<double, 3, 1>& origin,
+                                                   UpdateGridT::Ptr& temp_grid) const
 {
-  UpdateGridT::Ptr temp_grid     = UpdateGridT::create(false);
   UpdateGridT::Accessor temp_acc = temp_grid->getAccessor();
   if (!m_config_set)
   {
     std::cerr << "Map not properly configured. Did you call setConfig method?" << std::endl;
-    return temp_grid;
+    return;
   }
 
   openvdb::Vec3d origin_world(origin.x(), origin.y(), origin.z());
@@ -337,20 +343,19 @@ VDBMapping<DataT, ConfigT>::pointCloudToUpdateGrid(const PointCloudT::ConstPtr& 
   }
 
   temp_grid->insertMeta("origin", openvdb::Vec3DMetadata(origin_world));
-  return temp_grid;
+  return;
 }
 
 template <typename DataT, typename ConfigT>
-VDBMapping<DataT, ConfigT>::UpdateGridT::Ptr
-VDBMapping<DataT, ConfigT>::raycastUpdateGrid(const UpdateGridT::Ptr& grid) const
+void VDBMapping<DataT, ConfigT>::raycastUpdateGrid(const UpdateGridT::Ptr& grid,
+                                                   UpdateGridT::Ptr& temp_grid) const
 {
-  UpdateGridT::Ptr temp_grid     = UpdateGridT::create(false);
   UpdateGridT::Accessor temp_acc = temp_grid->getAccessor();
   // Check if a valid configuration was loaded
   if (!m_config_set)
   {
     std::cerr << "Map not properly configured. Did you call setConfig method?" << std::endl;
-    return temp_grid;
+    return;
   }
 
   RayT ray;
@@ -369,7 +374,7 @@ VDBMapping<DataT, ConfigT>::raycastUpdateGrid(const UpdateGridT::Ptr& grid) cons
     ray_end_world = m_vdb_grid->indexToWorld(iter.getCoord());
     castRayIntoGrid(ray_origin_world, ray_origin_index, ray_end_world, temp_acc);
   }
-  return temp_grid;
+  return;
 }
 
 
@@ -433,15 +438,14 @@ void VDBMapping<DataT, ConfigT>::castRayIntoGrid(const openvdb::Vec3d& ray_origi
 }
 
 template <typename DataT, typename ConfigT>
-VDBMapping<DataT, ConfigT>::UpdateGridT::Ptr
-VDBMapping<DataT, ConfigT>::updateMap(const UpdateGridT::Ptr& temp_grid)
+void VDBMapping<DataT, ConfigT>::updateMap(const UpdateGridT::Ptr& temp_grid,
+                                      UpdateGridT::Ptr& change)
 {
-  UpdateGridT::Ptr change          = UpdateGridT::create(false);
   UpdateGridT::Accessor change_acc = change->getAccessor();
   if (temp_grid->empty())
   {
     std::cout << "Update grid is empty. Cannot integrate it into the map." << std::endl;
-    return change;
+    return;
   }
 
   bool state_changed           = false;
@@ -487,7 +491,64 @@ VDBMapping<DataT, ConfigT>::updateMap(const UpdateGridT::Ptr& temp_grid)
       }
     }
   }
-  return change;
+  return;
+}
+
+template <typename DataT, typename ConfigT>
+void VDBMapping<DataT, ConfigT>::updateMap(const UpdateGridT::Ptr& temp_grid)
+{
+  UpdateGridT::Ptr change = UpdateGridT::create(false);
+  UpdateGridT::Accessor change_acc = change->getAccessor();
+  if (temp_grid->empty())
+  {
+    std::cout << "Update grid is empty. Cannot integrate it into the map." << std::endl;
+    return;
+  }
+
+  bool state_changed           = false;
+  typename GridT::Accessor acc = m_vdb_grid->getAccessor();
+  // Probability update lambda for free space grid elements
+  auto miss = [&](DataT& voxel_value, bool& active) {
+    bool last_state = active;
+    updateFreeNode(voxel_value, active);
+    if (last_state != active)
+    {
+      state_changed = true;
+    }
+  };
+
+  // Probability update lambda for occupied grid elements
+  auto hit = [&](DataT& voxel_value, bool& active) {
+    bool last_state = active;
+    updateOccupiedNode(voxel_value, active);
+    if (last_state != active)
+    {
+      state_changed = true;
+    }
+  };
+
+  // Integrating the data of the temporary grid into the map using the probability update functions
+  for (UpdateGridT::ValueOnCIter iter = temp_grid->cbeginValueOn(); iter; ++iter)
+  {
+    state_changed = false;
+    if (*iter == true)
+    {
+      acc.modifyValueAndActiveState(iter.getCoord(), hit);
+      if (state_changed)
+      {
+        change_acc.setValueOn(iter.getCoord(), true);
+      }
+    }
+    else
+    {
+      acc.modifyValueAndActiveState(iter.getCoord(), miss);
+      if (state_changed)
+      {
+        change_acc.setActiveState(iter.getCoord(), true);
+      }
+    }
+  }
+  return;
 }
 
 template <typename DataT, typename ConfigT>
