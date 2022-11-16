@@ -37,13 +37,6 @@
 #ifndef VDB_MAPPING_VDB_MAPPING_H_INCLUDED
 #define VDB_MAPPING_VDB_MAPPING_H_INCLUDED
 
-
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/common/transforms.h>
-#include <pcl/common/common.h>
-
-#include <chrono>
 #include <Eigen/Geometry>
 
 #include <openvdb/Types.h>
@@ -73,9 +66,6 @@ template <typename DataT, typename ConfigT = BaseConfig>
 class VDBMapping
 {
 public:
-  using PointT      = pcl::PointXYZ;
-  using PointCloudT = pcl::PointCloud<PointT>;
-
   using RayT  = openvdb::math::Ray<double>;
   using Vec3T = RayT::Vec3Type;
   using DDAT  = openvdb::math::DDA<RayT, 0>;
@@ -121,34 +111,27 @@ public:
   bool loadMap(const std::string file_path);
 
   /*!
-   * \brief Handles the integration of new PointCloud data into the VDB data structure.
+   * \brief Handles the integration of new Scan3d data into the VDB data structure.
    * All datapoints are raycasted starting from the origin position
    *
    * \param cloud Input cloud in map coordinates
    * \param origin Sensor position in map coordinates
    *
-   * \returns Was the insertion of the new pointcloud successful
+   * \returns Was the insertion of the new Scan3d successful
    */
-  bool insertPointCloud(const PointCloudT::ConstPtr& cloud,
+  bool insertPointCloud(const scan3d_data* cloud,
                         const Eigen::Matrix<double, 3, 1>& origin);
 
   /*!
-   * \brief Handles the integration of new PointCloud data into the VDB data structure.
+   * \brief Handles the integration of new Scan3d data into the VDB data structure.
    * All datapoints are raycasted starting from the origin position
    *
    * \param cloud Input cloud in map coordinates
    * \param origin Sensor position in map coordinates
    * \param update_grid Update grid that was created internally while maping
    *
-   * \returns Was the insertion of the new pointcloud successful
+   * \returns Was the insertion of the new scan successful
    */
-  bool insertPointCloud(const PointCloudT::ConstPtr& cloud,
-                        const Eigen::Matrix<double, 3, 1>& origin,
-                        UpdateGridT::Ptr& update_grid,
-                        UpdateGridT::Ptr& raycast_update_grid,
-                        UpdateGridT::Ptr& overwrite_grid,
-                        const bool reduce_data);
-
   bool insertPointCloud(const scan3d_data* cloud,
                         const Eigen::Matrix<double, 3, 1>& origin,
                         UpdateGridT::Ptr& update_grid,
@@ -158,31 +141,27 @@ public:
 
   /*!
    * \brief Creates a grid which contains all cells which should be updated by the
-   * inserted pointcloud.
+   * inserted scan.
    *
    * \param cloud Input cloud in map coordinates
    * \param origin Sensor position in map coordinates
    *
    * \returns Bitmask Grid containing all cells which have to be updated
    */
-  UpdateGridT::Ptr createUpdate(const PointCloudT::ConstPtr& cloud,
+  UpdateGridT::Ptr createUpdate(const scan3d_data* cloud,
                                 const Eigen::Matrix<double, 3, 1>& origin) const;
 
   /*!
-   * \brief  Raycasts a Pointcloud into an update Grid
+   * \brief  Raycasts a Scan3d into an update Grid
    *
    * \param cloud Input sensor point cloud
    * \param origin Origin of the sensor measurement
    *
    * \returns Raycasted update grid
    */
-  void raycastPointCloud(const PointCloudT::ConstPtr& cloud,
-                                     const Eigen::Matrix<double, 3, 1>& origin,
-                                     UpdateGridT::Ptr& temp_grid) const;
-
   void raycastPointCloud(const scan3d_data* cloud,
-                                     const Eigen::Matrix<double, 3, 1>& origin,
-                                     UpdateGridT::Ptr& temp_grid) const;
+                         const Eigen::Matrix<double, 3, 1>& origin,
+                         UpdateGridT::Ptr& temp_grid) const;
   /*!
    * \brief Raycasts an reduced data update Grid into full update grid
    *
@@ -194,7 +173,7 @@ public:
                          UpdateGridT::Ptr& temp_grid) const;
 
   /*!
-   * \brief Creates a reduced data update grid from a pointcloud which only contains the
+   * \brief Creates a reduced data update grid from a scan which only contains the
    * endpoints of the input cloud
    *
    * \param cloud Input sensor point cloud
@@ -202,10 +181,6 @@ public:
    *
    * \returns Reduced update grid
    */
-  void pointCloudToUpdateGrid(const PointCloudT::ConstPtr& cloud,
-                              const Eigen::Matrix<double, 3, 1>& origin,
-                              UpdateGridT::Ptr& temp_grid) const;
-
   void pointCloudToUpdateGrid(const scan3d_data* cloud,
                               const Eigen::Matrix<double, 3, 1>& origin,
                               UpdateGridT::Ptr& temp_grid) const;
@@ -235,7 +210,7 @@ public:
    *
    * \param temp_grid Grid containing all cells which shall be updated
    *
-   * \returns Was the insertion of the pointcloud successuff
+   * \returns Was the insertion of the scan successful
    */
   void updateMap(const UpdateGridT::Ptr& temp_grid,
                  UpdateGridT::Ptr& change);
@@ -247,27 +222,6 @@ public:
    * \returns Map pointer
    */
   typename GridT::Ptr getMap() const { return m_vdb_grid; }
-
-  /*!
-   * \brief Generates an update grid from the bouding box and a reference frame
-   *
-   * \param min_x Minimum x bound
-   * \param min_y Minimum y bound
-   * \param min_z Minimum z bound
-   * \param max_x Maximum x bound
-   * \param max_y Maximum y bound
-   * \param max_z Maximum z bound
-   * \param map_to_reference_tf Transform from map to reference frame
-   *
-   * \returns Update Grid
-   */
-  typename UpdateGridT::Ptr getMapSection(const double min_x,
-                                          const double min_y,
-                                          const double min_z,
-                                          const double max_x,
-                                          const double max_y,
-                                          const double max_z,
-                                          Eigen::Matrix<double, 4, 4> map_to_reference_tf) const;
 
   /*!
    * \brief Handles changing the mapping config

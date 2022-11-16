@@ -134,8 +134,6 @@ else()
   set(TBB_FIND_COMPONENTS ${_TBB_COMPONENT_LIST})
 endif()
 
-message(STATUS -- "TBB_ROOT:")
-message(STATUS -- "${TBB_ROOT}")
 if(TBB_ROOT)
   set(_TBB_ROOT ${TBB_ROOT})
 elseif(DEFINED ENV{TBB_ROOT})
@@ -217,8 +215,6 @@ if(EXISTS ${_tbb_version_file})
   unset(_tbb_version_major_string)
   unset(_tbb_version_minor_string)
 
-  message(STATUS "Version set?")
-
   set(Tbb_VERSION ${Tbb_VERSION_MAJOR}.${Tbb_VERSION_MINOR})
 endif()
 
@@ -271,7 +267,6 @@ foreach(COMPONENT ${TBB_FIND_COMPONENTS})
     endif()
 
     set(Tbb_${COMPONENT}_LIBRARY_${BUILD_TYPE} ${TBB_ROOT}/lib/lib${COMPONENT}.so)
-    message(COMPONENT "${Tbb_${COMPONENT}_LIBRARY_${BUILD_TYPE}}")
 
     # On Unix, TBB sometimes uses linker scripts instead of symlinks, so parse the linker script
     # and correct the library name if so

@@ -14,7 +14,7 @@ endif()
 ## System dependencies are found with CMake's conventions
 find_package(Eigen3 REQUIRED)
 find_package(OpenVDB REQUIRED)
-find_package(PCL REQUIRED)
+find_package(Boost REQUIRED)
 find_package(TBB REQUIRED)
 
 ###########
@@ -56,14 +56,13 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include>
     ${EIGEN3_INCLUDE_DIR}
     ${OpenVDB_INCLUDE_DIR}
-    ${PCL_INCLUDE_DIRS}
     )
 
     target_link_libraries(${PROJECT_NAME}
   PUBLIC
     ${OpenVDB_LIBRARIES}
-    ${PCL_LIBRARIES}
     ${TBB_LIBRARIES}
+    Boost::headers
     )
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
