@@ -26,7 +26,6 @@
  */
 //----------------------------------------------------------------------
 
-// -- LICENSE ON MODIFICATIONS -----------------------------------------
 // RACK KION - Robotics Application Construction Kit (KION internal)
 // Copyright (C) 2022 KION Group AG
 //
@@ -34,7 +33,7 @@
 //
 // Author
 //     Jonas Herzfeld <jonas.herzfeld@kiongroup.com>
-// ---------------------------------------------------------------------
+
 #ifndef VDB_MAPPING_VDB_MAPPING_H_INCLUDED
 #define VDB_MAPPING_VDB_MAPPING_H_INCLUDED
 
@@ -53,6 +52,8 @@
 #include <openvdb/math/Ray.h>
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/Morphology.h>
+
+#include <perception/scan3d_proxy.h>
 
 namespace vdb_mapping {
 
@@ -148,6 +149,12 @@ public:
                         UpdateGridT::Ptr& overwrite_grid,
                         const bool reduce_data);
 
+  bool insertPointCloud(const scan3d_data* cloud,
+                        const Eigen::Matrix<double, 3, 1>& origin,
+                        UpdateGridT::Ptr& update_grid,
+                        UpdateGridT::Ptr& raycast_update_grid,
+                        UpdateGridT::Ptr& overwrite_grid,
+                        const bool reduce_data);
 
   /*!
    * \brief Creates a grid which contains all cells which should be updated by the
@@ -173,6 +180,9 @@ public:
                                      const Eigen::Matrix<double, 3, 1>& origin,
                                      UpdateGridT::Ptr& temp_grid) const;
 
+  void raycastPointCloud(const scan3d_data* cloud,
+                                     const Eigen::Matrix<double, 3, 1>& origin,
+                                     UpdateGridT::Ptr& temp_grid) const;
   /*!
    * \brief Raycasts an reduced data update Grid into full update grid
    *
@@ -196,6 +206,9 @@ public:
                               const Eigen::Matrix<double, 3, 1>& origin,
                               UpdateGridT::Ptr& temp_grid) const;
 
+  void pointCloudToUpdateGrid(const scan3d_data* cloud,
+                              const Eigen::Matrix<double, 3, 1>& origin,
+                              UpdateGridT::Ptr& temp_grid) const;
   /*!
    * \brief Casts a single ray into an update grid structure
    *

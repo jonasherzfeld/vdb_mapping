@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules" ${CMAKE_MODULE_PATH})
 cmake_policy(SET CMP0074 NEW)
 
-option(BUILDING_TESTS "Build unit tests." ON)
+option(BUILDING_TESTS "Build unit tests." OFF)
 
 project(vdb_mapping CXX)
 
